@@ -154,7 +154,7 @@ def human_readable_size(n: int):
         n /= 1024
     return f"{n:.1f}P"
 
-def save_run(path: Path, submission_report_path: Path, size: int = 0):
+def save_run(path: Path, submission_report_path: Path, model_name: str, dataset_name: str, size: int = 0):
     global _timestamps
     global _timestampsStr
     global _bandwidth
@@ -174,17 +174,21 @@ def save_run(path: Path, submission_report_path: Path, size: int = 0):
 
     if size == 0:
         json.dump({
+            "model_name": model_name,
+            "dataset_name": dataset_name,
             "Timing": _timestampsStr,
             "Bandwidth": _bandwidth,
             "Server Reported": _timestampsRemote,
-        }, open(path,"w"), indent=2)
+        }, open(path, "w"), indent=2)
     else:
         json.dump({
+            "model_name": model_name,
+            "dataset_name": dataset_name,
             "Timing": _timestampsStr,
             "Bandwidth": _bandwidth,
-            "Quality" : _model_quality,
+            "Quality": _model_quality,
             "Server Reported": _timestampsRemote,
-        }, open(path,"w"), indent=2)
+        }, open(path, "w"), indent=2)
 
     print("[total latency]", f"{round(sum(_timestamps.values()), 4)}s")
 

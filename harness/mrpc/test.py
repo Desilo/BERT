@@ -31,12 +31,12 @@ def test_model(model, tokenizer, dataset, device="cpu"):
 
 def predict(samples_file, predictions_file="predictions.txt", device="cpu"):
     """
-    Load google-bert/bert-base-uncased and make predictions on a JSONL sentence-pair file.
+    Load the fine-tuned MRPC model and make predictions on a JSONL sentence-pair file.
 
     Args:
         samples_file (str): Path to JSONL file with sentence1 and sentence2 fields.
         predictions_file (str): Output file for predictions (one integer per line).
-        device (str): Device to run inference on (default: cpu).
+        device (str): Device to run inference on ('cpu' or 'cuda').
 
     Returns:
         list: Predicted integer labels.

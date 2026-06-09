@@ -9,6 +9,7 @@ from absl import app, flags
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(__file__))
+
 import test
 from model import get_model, get_tokenizer
 
@@ -34,6 +35,7 @@ try:
     flags.DEFINE_string('predictions_file', 'predictions.txt', 'Output file for predictions')
 except flags.DuplicateFlagError:
     pass
+
 
 # Ensure reproducibility
 torch.manual_seed(RNG_SEED)

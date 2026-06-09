@@ -20,6 +20,7 @@ import utils
 from utils import parse_submission_arguments
 from mnist import mnist
 from cifar10 import cifar10
+from mrpc import mrpc
 
 
 def main():
@@ -40,12 +41,19 @@ def main():
                     labels_file=LABELS_PATH, 
                     num_samples=num_samples, 
                     seed=seed)
-        case "cifar10": 
+        case "cifar10":
             return cifar10.export_test_pixels_labels(
-                    data_dir = params.datadir(), 
-                    pixels_file=PIXELS_PATH, 
-                    labels_file=LABELS_PATH, 
-                    num_samples=num_samples, 
+                    data_dir = params.datadir(),
+                    pixels_file=PIXELS_PATH,
+                    labels_file=LABELS_PATH,
+                    num_samples=num_samples,
+                    seed=seed)
+        case "mrpc":
+            return mrpc.export_test_pixels_labels(
+                    data_dir = params.datadir(),
+                    samples_file=PIXELS_PATH,
+                    labels_file=LABELS_PATH,
+                    num_samples=num_samples,
                     seed=seed)
         case _:
             raise ValueError(f"Unsupported dataset name: {dataset_name}")

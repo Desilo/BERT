@@ -23,6 +23,7 @@ from pathlib import Path
 from utils import parse_submission_arguments
 from mnist import mnist
 from cifar10 import cifar10
+from mrpc import mrpc
 
 def main():
     """
@@ -46,10 +47,14 @@ def main():
                 model_path=minst_path, 
                 pixels_file=INPUT_PATH, 
                 predictions_file=OUTPUT_PATH)
-        case "cifar10": 
+        case "cifar10":
             return cifar10.run_predict(
-                model_path=cifar10_path, 
-                pixels_file=INPUT_PATH, 
+                model_path=cifar10_path,
+                pixels_file=INPUT_PATH,
+                predictions_file=OUTPUT_PATH)
+        case "mrpc":
+            return mrpc.run_predict(
+                input_file=INPUT_PATH,
                 predictions_file=OUTPUT_PATH)
         case _:
             raise ValueError(f"Unsupported dataset name: {DATASET_NAME}")

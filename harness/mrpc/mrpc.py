@@ -93,7 +93,6 @@ def export_test_sentence_pairs(data_dir=DATA_DIR, samples_file="mrpc_samples.jso
                 "target_idx": row["idx"],
                 "sentence1": row["sentence1"],
                 "sentence2": row["sentence2"],
-                "label": row["label"],
             }) + "\n")
             lf.write(f"{row['label']}\n")
 

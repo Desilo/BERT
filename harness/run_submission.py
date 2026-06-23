@@ -25,7 +25,7 @@ def main():
     """
     Run the entire submission process, from build to verify
     """
-    
+
     # 0. Prepare running
     # Get the arguments
     size, params, seed, num_runs, clrtxt, model_name, dataset_name = utils.parse_submission_arguments('Run ML Inference FHE benchmark.')
@@ -37,12 +37,6 @@ def main():
 
     harness_dir = params.rootdir/"harness"
     exec_dir = params.rootdir/"submissions"
-
-    # check whether the exec_dir contains a subdirectory equals to the model name.
-    model_exec_dir = exec_dir / model_name
-    if not model_exec_dir.is_dir():
-        print(f"[harness]: Model directory {model_exec_dir} not found.")
-        sys.exit(1)
 
     # check whether the dataset exist
     dataset_exec_dir = harness_dir/dataset_name
@@ -72,13 +66,13 @@ def main():
     # Note: this does not use the rng seed above, it lets the implementation
     #   handle its own prg needs. It means that even if called with the same
     #   seed multiple times, the keys and ciphertexts will still be different.
-    utils.run_exe_or_python(model_exec_dir, "client_key_generation", str(size))
+    utils.run_exe_or_python(exec_dir, "client_key_generation", str(size))
     utils.log_step(2, "Key Generation")
     # Report size of keys and encrypted data
     utils.log_size(io_dir / "public_keys", "Public and evaluation keys")
 
     # 3. Server-side: Preprocess the (encrypted) dataset using exec_dir/server_preprocess_model
-    utils.run_exe_or_python(model_exec_dir, "server_preprocess_model", str(size))
+    utils.run_exe_or_python(exec_dir, "server_preprocess_model", str(size))
     utils.log_step(3, "Encrypted model preprocessing")
 
     # Run steps 4-10 multiple times if requested
@@ -97,26 +91,26 @@ def main():
         utils.log_step(4, "Input generation")
 
         # 5. Client-side: Preprocess input using exec_dir/client_preprocess_input
-        utils.run_exe_or_python(model_exec_dir, "client_preprocess_input", str(size))
+        utils.run_exe_or_python(exec_dir, "client_preprocess_input", str(size))
         utils.log_step(5, "Input preprocessing")
 
         # 6. Client-side: Encrypt the input
-        utils.run_exe_or_python(model_exec_dir, "client_encode_encrypt_input", str(size))
+        utils.run_exe_or_python(exec_dir, "client_encode_encrypt_input", str(size))
         utils.log_step(6, "Input encryption")
         utils.log_size(io_dir / "ciphertexts_upload", "Encrypted input")
 
         # 7. Server side: Run the encrypted processing run exec_dir/server_encrypted_compute
-        utils.run_exe_or_python(model_exec_dir, "server_encrypted_compute", str(size))
+        utils.run_exe_or_python(exec_dir, "server_encrypted_compute", str(size))
         utils.log_step(7, "Encrypted computation")
         # Report size of encrypted results
         utils.log_size(io_dir / "ciphertexts_download", "Encrypted results")
 
         # 8. Client-side: decrypt
-        utils.run_exe_or_python(model_exec_dir, "client_decrypt_decode", str(size))
+        utils.run_exe_or_python(exec_dir, "client_decrypt_decode", str(size))
         utils.log_step(8, "Result decryption")
 
         # 9. Client-side: post-process
-        utils.run_exe_or_python(model_exec_dir, "client_postprocess", str(size))
+        utils.run_exe_or_python(exec_dir, "client_postprocess", str(size))
         utils.log_step(9, "Result postprocessing")
 
         # 10 Verify the result for single inference or calculate quality for batch inference.

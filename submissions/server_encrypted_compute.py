@@ -1,4 +1,6 @@
+import argparse
 import json
+import os
 import sys
 
 import numpy as np
@@ -8,11 +10,11 @@ from he import HE
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <size>", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('size', type=int)
+    args = parser.parse_args()
 
-    params = InstanceParams(int(sys.argv[1]), dataset="mrpc")
+    params = InstanceParams(args.size, dataset="mrpc")
     io_dir = params.iodir()
     batch_size = params.get_batch_size()
 
@@ -20,9 +22,10 @@ def main():
         config = json.load(f)
     compact = config["compact"]
     bootstrap_key_size = config["bootstrap_key_size"]
+    thread_count = min(16, os.cpu_count() or 1)
 
     print("Loading keys and weights...")
-    he = HE(params, compact, bootstrap_key_size)
+    he = HE(params, compact, bootstrap_key_size, thread_count=thread_count)
 
     upload_dir = io_dir / "ciphertexts_upload"
     download_dir = io_dir / "ciphertexts_download"
@@ -62,7 +65,7 @@ def main():
         total_compute_seconds += compute
         total_paused_seconds += paused
         total_elapsed_seconds += elapsed
-        print(f"  Compute: {compute:.3f}s, I/O: {paused:.3f}s, Total: {elapsed:.3f}s")s
+        print(f"  Compute: {compute:.3f}s, I/O: {paused:.3f}s, Total: {elapsed:.3f}s")
 
         out_dir = download_dir / str(idx)
         out_dir.mkdir(exist_ok=True)

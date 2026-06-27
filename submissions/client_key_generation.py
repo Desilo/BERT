@@ -1,4 +1,6 @@
+import argparse
 import json
+import os
 import sys
 
 from desilofhe import Engine
@@ -63,11 +65,11 @@ _ROTATION_CONTEXTS = [
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <size>", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('size', type=int)
+    args = parser.parse_args()
 
-    params = InstanceParams(int(sys.argv[1]), dataset="mrpc")
+    params = InstanceParams(args.size, dataset="mrpc")
     io_dir = params.iodir()
     public_keys_dir = io_dir / "public_keys"
     fixed_rotation_keys_dir = public_keys_dir / "fixed_rotation_keys"
@@ -78,17 +80,22 @@ def main():
     compact = COMPACT
     bootstrap_key_size = "medium" if compact else "large"
     config = {"compact": compact, "bootstrap_key_size": bootstrap_key_size}
+    thread_count = min(16, os.cpu_count() or 1)
+
     with open(io_dir / "thor_config.json", "w") as f:
         json.dump(config, f, indent=2)
 
     print(f"compact={compact}  bootstrap_key_size={bootstrap_key_size}")
 
-    engine = Engine(
-        use_bootstrap_to_14_levels=True,
-        mode="parallel",
-        thread_count=16,
-        compact=compact,
-    )
+    if thread_count == 1:
+        engine = Engine(use_bootstrap_to_14_levels=True, compact=compact)
+    else:
+        engine = Engine(
+            use_bootstrap_to_14_levels=True,
+            mode="parallel",
+            thread_count=thread_count,
+            compact=compact,
+        )
 
     print("Generating secret key...")
     secret_key = engine.create_secret_key()

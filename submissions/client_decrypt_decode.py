@@ -1,4 +1,6 @@
+import argparse
 import json
+import os
 import sys
 
 import numpy as np
@@ -8,11 +10,11 @@ from params import InstanceParams
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <size>", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('size', type=int)
+    args = parser.parse_args()
 
-    params = InstanceParams(int(sys.argv[1]), dataset="mrpc")
+    params = InstanceParams(args.size, dataset="mrpc")
     io_dir = params.iodir()
     download_dir = io_dir / "ciphertexts_download"
     intermediate_dir = params.io_intermediate_dir()
@@ -26,18 +28,22 @@ def main():
     with open(config_path) as f:
         config = json.load(f)
     compact = config["compact"]
+    thread_count = min(16, os.cpu_count() or 1)
 
     secret_key_path = io_dir / "secret_key"
     if not secret_key_path.exists():
         print(f"Error: secret key not found: {secret_key_path}", file=sys.stderr)
         sys.exit(1)
 
-    engine = Engine(
-        use_bootstrap_to_14_levels=True,
-        mode="parallel",
-        thread_count=16,
-        compact=compact,
-    )
+    if thread_count == 1:
+        engine = Engine(use_bootstrap_to_14_levels=True, compact=compact)
+    else:
+        engine = Engine(
+            use_bootstrap_to_14_levels=True,
+            mode="parallel",
+            thread_count=thread_count,
+            compact=compact,
+        )
     secret_key = engine.read_secret_key(secret_key_path)
 
     records = []

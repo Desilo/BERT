@@ -1,7 +1,12 @@
 import json
-import mmap
+import multiprocessing as mp
+import os
+import shutil
+import subprocess
 import sys
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
+import psutil
 
 from desilofhe import Engine
 from transformers import BertForSequenceClassification
@@ -32,18 +37,43 @@ PER_LAYER_STAGES = [
     "stage_14", "stage_16",
 ]
 
+# Per-process state. The engine is single threaded, so we fan out across
+# processes; each worker holds its own engine. Weights are read-only and
+# inherited by workers via fork copy-on-write (never pickled).
+_engine = None
+_weights = None
+
+
+def _init_worker(compact):
+    global _engine
+    _engine = Engine(use_bootstrap_to_14_levels=True, compact=compact)
+
+
+def _run_task(task):
+    fn, uses_weights, args = task
+    if uses_weights:
+        fn(_engine, _weights, *args)
+    else:
+        fn(_engine, *args)
+
 
 def warm_cache(path: Path):
-    for f in path.rglob("*"):
-        if not f.is_file():
-            continue
-        with open(f, "rb") as fh:
-            length = f.stat().st_size
-            if length == 0:
-                continue
-            with mmap.mmap(fh.fileno(), length, access=mmap.ACCESS_READ) as m:
-                m.madvise(mmap.MADV_SEQUENTIAL)
-                m.read(length)
+    # All sizes are in GiB.
+    virtual_memory = psutil.virtual_memory().available // 1024**3
+    light_plaintexts_size = 105
+    compute_memory = 40
+
+    if virtual_memory - compute_memory < light_plaintexts_size:
+        print("Warning: System memory has not enough space to hold the light plaintexts in memory."
+              "This may lead to low performance.")
+        return
+
+    if shutil.which("vmtouch") is None:
+        print("Warning: vmtouch not found; skipping page cache warming. "
+              "Install it (e.g. `apt install vmtouch`) for lower inference latency.")
+        return
+
+    subprocess.run(["vmtouch", "-qt", str(path)], check=True)
 
 
 def light_plaintext_path(server_data_dir, compact):
@@ -85,26 +115,36 @@ def main():
     model = BertForSequenceClassification.from_pretrained(MODEL_ID, output_hidden_states=True)
     model.eval()
 
-    weights = {k: v.detach().cpu().numpy() for k, v in model.state_dict().items()}
+    global _weights
+    _weights = {k: v.detach().cpu().numpy() for k, v in model.state_dict().items()}
     del model
 
     lp_path.mkdir(parents=True, exist_ok=True)
-    engine = Engine(use_bootstrap_to_14_levels=True, compact=compact)
 
-    pre_encode_masks(engine, lp_path)
+    engine_count = min(16, os.cpu_count() or 1)
 
+    encoding_functions = [
+        pre_encode_stage_03, pre_encode_stage_04, pre_encode_stage_05,
+        pre_encode_stage_10, pre_encode_stage_11, pre_encode_stage_12,
+        pre_encode_stage_14, pre_encode_stage_16,
+    ]
+
+    tasks = [(pre_encode_masks, False, (lp_path,))]
     for layer_index in range(12):
-        pre_encode_stage_03(engine, weights, layer_index, lp_path)
-        pre_encode_stage_04(engine, weights, layer_index, lp_path)
-        pre_encode_stage_05(engine, weights, layer_index, lp_path)
-        pre_encode_stage_10(engine, weights, layer_index, lp_path)
-        pre_encode_stage_11(engine, weights, layer_index, lp_path)
-        pre_encode_stage_12(engine, weights, layer_index, lp_path)
-        pre_encode_stage_14(engine, weights, layer_index, lp_path)
-        pre_encode_stage_16(engine, weights, layer_index, lp_path)
+        for fn in encoding_functions:
+            tasks.append((fn, True, (layer_index, lp_path)))
+    tasks.append((pre_encode_stage_17, True, (lp_path,)))
+    tasks.append((pre_encode_stage_18, True, (lp_path,)))
 
-    pre_encode_stage_17(engine, weights, lp_path)
-    pre_encode_stage_18(engine, weights, lp_path)
+    # fork so workers inherit the weights via copy-on-write.
+    ctx = mp.get_context("fork")
+    with ProcessPoolExecutor(
+        max_workers=engine_count,
+        mp_context=ctx,
+        initializer=_init_worker,
+        initargs=(compact,),
+    ) as executor:
+        list(executor.map(_run_task, tasks))
 
     # This reduces the latency during the inference.
     print("         [submission] Warming page cache...")

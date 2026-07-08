@@ -6,6 +6,7 @@ import math
 import queue
 import threading
 from concurrent.futures import ThreadPoolExecutor
+import psutil
 
 import numpy as np
 
@@ -27,15 +28,28 @@ def main():
     compact = config["compact"]
     bootstrap_key_size = config["bootstrap_key_size"]
 
-    cpu_count = os.cpu_count() or 1
+    # All sizes are in GiB
+    virtual_memory = psutil.virtual_memory().available // 1024**3
+    light_plaintexts_size = 105
+    compute_memory = 40
+
+    if virtual_memory > light_plaintexts_size:
+        worker_count = max((virtual_memory - light_plaintexts_size) // compute_memory, 1)
+    else:
+        # Ignore the light plaintext cache and just use the available memory for workers
+        worker_count = max(virtual_memory // compute_memory, 1)
+
+    # For small batch sizes, we don't need more workers than samples
+    worker_count = min(worker_count, batch_size)
+
+    cpu_count = max(os.cpu_count() or 1 // worker_count, 1)
     thread_count = min(16, cpu_count)
-    worker_count = math.ceil(cpu_count / 16)
+
+    print("         [submission] Loading keys and weights...")
+
     he_pool = queue.Queue()
     for _ in range(worker_count):
         he_pool.put(HE(params, compact, bootstrap_key_size, thread_count=thread_count))
-
-    print("         [submission] Loading keys and weights...")
-    he = HE(params, compact, bootstrap_key_size, thread_count=thread_count)
 
     upload_dir = io_dir / "ciphertexts_upload"
     download_dir = io_dir / "ciphertexts_download"

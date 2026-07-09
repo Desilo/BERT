@@ -6,15 +6,16 @@ import sys
 import numpy as np
 import torch
 from desilofhe import Engine
-from transformers import BertForSequenceClassification
+from transformers import BertForNextSentencePrediction
 from transformers.utils import logging as hf_logging
 
 from params import InstanceParams
 
 # Hide transformers' loading progress bars
+hf_logging.set_verbosity_error()
 hf_logging.disable_progress_bar()
 
-EMBED_MODEL_ID = "google-bert/bert-base-cased-finetuned-mrpc"
+EMBED_MODEL_ID = "google-bert/bert-base-uncased"
 EMBED_LEVEL = 9
 
 
@@ -91,7 +92,7 @@ def main():
         )
     secret_key = engine.read_secret_key(io_dir / "secret_key")
 
-    embedding_model = BertForSequenceClassification.from_pretrained(EMBED_MODEL_ID).bert.embeddings
+    embedding_model = BertForNextSentencePrediction.from_pretrained(EMBED_MODEL_ID).bert.embeddings
     embedding_model.eval()
 
     records = []

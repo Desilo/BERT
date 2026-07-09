@@ -2,18 +2,18 @@
   "model_name": "thor",
   "dataset_name": "mrpc",
   "Timing": {
-    "Test dataset generation": "10.9631s",
-    "Key Generation": "89.2107s",
-    "Encrypted model preprocessing": "237.3233s",
-    "Input generation": "9.874s",
-    "Input preprocessing": "6.2585s",
-    "Input encryption": "68.5772s",
-    "Encrypted computation": "93090.9022s",
-    "Result decryption": "92.1399s",
-    "Result postprocessing": "0.0417s",
-    "Harness: Run inference for harness plaintext model": "21.7691s",
-    "Harness: Run quality check": "0.0039s",
-    "Total": "93627.0635s"
+    "Test dataset generation": "13.5964s",
+    "Key Generation": "65.7722s",
+    "Encrypted model preprocessing": "431.7124s",
+    "Input generation": "9.5306s",
+    "Input preprocessing": "6.638s",
+    "Input encryption": "61.3872s",
+    "Encrypted computation": "26330.5768s",
+    "Result decryption": "91.5871s",
+    "Result postprocessing": "0.0483s",
+    "Harness: Run inference for harness plaintext model": "15.9364s",
+    "Harness: Run quality check": "0.0033s",
+    "Total": "27026.7887s"
   },
   "Bandwidth": {
     "Public and evaluation keys": "21.4G",
@@ -22,19 +22,19 @@
   },
   "Quality": {
     "Encrypted model quality": {
-      "correct_predictions": 82,
+      "correct_predictions": 88,
       "total_samples": 100,
-      "accuracy": 0.82
+      "accuracy": 0.88
     },
     "Harness model quality": {
-      "correct_predictions": 84,
+      "correct_predictions": 90,
       "total_samples": 100,
-      "accuracy": 0.84
+      "accuracy": 0.9
     }
   },
   "Server Reported": {
-    "Encrypted computation": "347855.211s",
-    "I/O": "17402.9988s",
-    "Total": "365258.2101s"
+    "Encrypted computation": "12137.6903s",
+    "I/O": "14092.2383s",
+    "Total": "26229.9287s"
   }
 }

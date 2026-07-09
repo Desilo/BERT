@@ -23,7 +23,8 @@ This corresponds to every reference submission in `submissions/`.
 
 #### Dependencies
 - Python 3.10+
-- The Python packages listed in `requirements.txt` (`numpy`, `torch`, `transformers`, `datasets`, `desilofhe`). The first run downloads the BERT model and the MRPC dataset from the Hugging Face Hub, so an internet connection is required for the initial setup.
+- The Python packages listed in `requirements.txt` (`numpy`, `torch`, `transformers`, `datasets`, `desilofhe-cu130`). The first run downloads the BERT model and the MRPC dataset from the Hugging Face Hub, so an internet connection is required for the initial setup.
+  - **Important:** the CUDA version suffix in `desilofhe-cu<XXX>` (e.g. `desilofhe-cu130`) must match your local CUDA environment. If it does not, the submission will fail to run. Check your CUDA version (e.g. with `nvcc --version` or `nvidia-smi`) and install the matching `desilofhe-cu<XXX>` build.
 - [`vmtouch`](https://github.com/hoytech/vmtouch) (optional, recommended). It is used to warm the page cache with the precomputed light plaintexts, which lowers inference latency. If it is not installed the step is skipped with a warning. Install it via your package manager, e.g. `apt install vmtouch` (Debian/Ubuntu), `brew install vmtouch` (macOS).
 
 #### Execution

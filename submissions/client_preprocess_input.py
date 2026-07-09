@@ -6,9 +6,11 @@ from transformers import AutoTokenizer
 from transformers.utils import logging as hf_logging
 
 # Hide transformers' loading progress bars
+hf_logging.set_verbosity_error()
 hf_logging.disable_progress_bar()
 
-MODEL_ID = "google-bert/bert-base-cased-finetuned-mrpc"
+# For encoding, base model is used.
+MODEL_ID = "google-bert/bert-base-uncased"
 MAX_LENGTH = 128
 
 

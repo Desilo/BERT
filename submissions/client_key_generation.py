@@ -80,22 +80,17 @@ def main():
     compact = COMPACT
     bootstrap_key_size = "medium" if compact else "large"
     config = {"compact": compact, "bootstrap_key_size": bootstrap_key_size}
-    thread_count = min(16, os.cpu_count() or 1)
 
     with open(io_dir / "thor_config.json", "w") as f:
         json.dump(config, f, indent=2)
 
     print(f"         [submission] compact={compact}  bootstrap_key_size={bootstrap_key_size}")
 
-    if thread_count == 1:
-        engine = Engine(use_bootstrap_to_14_levels=True, compact=compact)
-    else:
-        engine = Engine(
-            use_bootstrap_to_14_levels=True,
-            mode="parallel",
-            thread_count=thread_count,
-            compact=compact,
-        )
+    engine = Engine(
+        use_bootstrap_to_14_levels=True,
+        mode="async gpu",
+        compact=compact,
+    )
 
     print("         [submission] Generating secret key...")
     secret_key = engine.create_secret_key()

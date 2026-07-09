@@ -1,12 +1,14 @@
-from transformers import AutoTokenizer, BertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForNextSentencePrediction
 
-MODEL_ID = "google-bert/bert-base-cased-finetuned-mrpc"
+MODEL_ID = "desilo-ai/bert-base-uncased-finetuned-mrpc"
+# desilo model does not have a tokenizer, so we use the base model's tokenizer instead.
+TOKENIZER_ID = "google-bert/bert-base-uncased"
 
 
 def get_model(device="cpu"):
-    model = BertForSequenceClassification.from_pretrained(MODEL_ID).to(device)
+    model = AutoModelForNextSentencePrediction.from_pretrained(MODEL_ID).to(device)
     return model
 
 
 def get_tokenizer():
-    return AutoTokenizer.from_pretrained(MODEL_ID)
+    return AutoTokenizer.from_pretrained(TOKENIZER_ID)

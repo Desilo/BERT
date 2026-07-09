@@ -9,7 +9,7 @@ from pathlib import Path
 import psutil
 
 from desilofhe import Engine
-from transformers import BertForSequenceClassification
+from transformers import BertForNextSentencePrediction
 from transformers.utils import logging as hf_logging
 
 from params import InstanceParams
@@ -30,7 +30,7 @@ from encode_weights import (
 # Hide transformers' loading progress bars
 hf_logging.disable_progress_bar()
 
-MODEL_ID = "google-bert/bert-base-cased-finetuned-mrpc"
+MODEL_ID = "desilo-ai/bert-base-uncased-finetuned-mrpc"
 PER_LAYER_STAGES = [
     "stage_03", "stage_04", "stage_05",
     "stage_10", "stage_11", "stage_12",
@@ -112,7 +112,7 @@ def main():
         return
 
     print("         [submission] Generating light plaintexts...")
-    model = BertForSequenceClassification.from_pretrained(MODEL_ID, output_hidden_states=True)
+    model = BertForNextSentencePrediction.from_pretrained(MODEL_ID, output_hidden_states=True)
     model.eval()
 
     global _weights
